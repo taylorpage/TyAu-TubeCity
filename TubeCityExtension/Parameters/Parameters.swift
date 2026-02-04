@@ -11,6 +11,14 @@ import AudioToolbox
 let TubeCityExtensionParameterSpecs = ParameterTreeSpec {
     ParameterGroupSpec(identifier: "global", name: "Global") {
         ParameterSpec(
+            address: .outputvolume,
+            identifier: "outputvolume",
+            name: "Output Volume",
+            units: .linearGain,
+            valueRange: 0.0...2.0,
+            defaultValue: 1.0
+        )
+        ParameterSpec(
             address: .tubegain,
             identifier: "tubegain",
             name: "Tube Gain",
@@ -49,6 +57,15 @@ let TubeCityExtensionParameterSpecs = ParameterTreeSpec {
             units: .boolean,
             valueRange: 0.0...1.0,
             defaultValue: 0.0
+        )
+        ParameterSpec(
+            address: .signallevel,
+            identifier: "signallevel",
+            name: "Signal Level",
+            units: .linearGain,
+            valueRange: 0.0...1.0,
+            defaultValue: 0.0,
+            flags: [.flag_IsReadable]  // Read-only parameter for metering
         )
     }
 }

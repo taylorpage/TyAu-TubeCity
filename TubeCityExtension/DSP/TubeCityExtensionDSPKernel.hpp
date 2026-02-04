@@ -142,6 +142,9 @@ public:
     // MARK: - Parameter Getter / Setter
     void setParameter(AUParameterAddress address, AUValue value) {
         switch (address) {
+            case TubeCityExtensionParameterAddress::outputvolume:
+                mOutputVolume = value;
+                break;
             case TubeCityExtensionParameterAddress::tubegain:
                 mTubeGain = value;
                 break;
@@ -164,6 +167,8 @@ public:
         // Return the goal. It is not thread safe to return the ramping value.
 
         switch (address) {
+            case TubeCityExtensionParameterAddress::outputvolume:
+                return (AUValue)mOutputVolume;
             case TubeCityExtensionParameterAddress::tubegain:
                 return (AUValue)mTubeGain;
             case TubeCityExtensionParameterAddress::bypass:
@@ -174,9 +179,16 @@ public:
                 return (AUValue)mWarmTubeAmount;
             case TubeCityExtensionParameterAddress::aggressivetube:
                 return (AUValue)mAggressiveTubeAmount;
+            case TubeCityExtensionParameterAddress::signallevel:
+                return (AUValue)mSignalLevel;
 
             default: return 0.f;
         }
+    }
+
+    // MARK: - Signal Level Metering
+    float getSignalLevel() const {
+        return mSignalLevel;
     }
     
     // MARK: - Max Frames
@@ -211,6 +223,8 @@ public:
             for (UInt32 channel = 0; channel < inputBuffers.size(); ++channel) {
                 std::copy_n(inputBuffers[channel], frameCount, outputBuffers[channel]);
             }
+            // Reset signal level when bypassed
+            mSignalLevel = 0.0f;
             return;
         }
         
@@ -273,11 +287,22 @@ public:
                     tubeProcessed = tubeProcessed + (aggressiveProcessed - tubeProcessed) * mAggressiveTubeAmount;
                 }
 
-                // Output with subtle makeup gain
-                float makeupGain = 1.0f + ((mTubeGain - 1.0f) * 0.2f);  // Gentle compensation
-                float output = tubeProcessed * makeupGain;
+                // Output with makeup gain and output volume
+                // Aggressive makeup gain to compensate for tube processor losses (which have ~0.45-0.92 output gains)
+                float makeupGain = 2.5f;  // Strong compensation for tube saturation losses
+                float output = tubeProcessed * makeupGain * mOutputVolume;
 
                 outputBuffers[channel][frameIndex] = output;
+
+                // Update signal level meter (peak detection with decay)
+                float absOutput = std::abs(output);
+                if (absOutput > mSignalLevel) {
+                    // Fast attack: immediately track peaks
+                    mSignalLevel = absOutput;
+                } else {
+                    // Slow decay: smoothly fall back
+                    mSignalLevel *= 0.9995f;  // Decay coefficient
+                }
             }
         }
     }
@@ -302,6 +327,7 @@ public:
     AUHostMusicalContextBlock mMusicalContextBlock;
 
     double mSampleRate = 44100.0;
+    float mOutputVolume = 1.0f;  // 0.0 to 2.0
     float mTubeGain = 1.0f;  // 0.0 to 2.0
     bool mBypassed = false;
     AUAudioFrameCount mMaxFramesToRender = 1024;
@@ -328,4 +354,7 @@ public:
     // High-pass filter state
     float mHPF_x1[8] = {0.0f}, mHPF_x2[8] = {0.0f};
     float mHPF_y1[8] = {0.0f}, mHPF_y2[8] = {0.0f};
+
+    // Signal level meter (for visual feedback)
+    float mSignalLevel = 0.0f;
 };

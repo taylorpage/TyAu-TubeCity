@@ -9,12 +9,18 @@ import SwiftUI
 
 struct ParameterKnob: View {
     @State var param: ObservableAUParameter
+    let size: CGFloat
 
     @State private var isDragging = false
     @State private var lastDragValue: CGFloat = 0
 
-    let knobSize: CGFloat = 140
-    let scaleRadius: CGFloat = 65  // Closer to knob edge
+    var knobSize: CGFloat { size }
+    var scaleRadius: CGFloat { size * 0.464 }  // Proportional to size
+
+    init(param: ObservableAUParameter, size: CGFloat = 140) {
+        self.param = param
+        self.size = size
+    }
 
     var specifier: String {
         switch param.unit {

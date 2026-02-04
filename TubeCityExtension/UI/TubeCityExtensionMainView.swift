@@ -62,7 +62,18 @@ struct TubeCityExtensionMainView: View {
 
             VStack(spacing: 20) {
                 Spacer()
-                    .frame(height: 40)
+                    .frame(height: 20)
+
+                // Vacuum tube visual element
+                VacuumTube(
+                    signalLevel: Double(signalLevelParam.value),
+                    isBypassed: param.boolValue,
+                    width: 50,
+                    height: 100
+                )
+
+                Spacer()
+                    .frame(height: 10)
 
                 // LED indicator
                 ZStack {
@@ -118,22 +129,33 @@ struct TubeCityExtensionMainView: View {
                     y: 0
                 )
 
+                // Output volume knob (larger, prominent)
+                VStack(spacing: 4) {
+                    ParameterKnob(param: parameterTree.global.outputvolume, size: 60)
+                    Text("VOLUME")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.black)
+                }
+
+                Spacer()
+                    .frame(height: 10)
+
                 // Three tube style knobs
                 HStack(spacing: 20) {
                     VStack(spacing: 4) {
-                        ParameterKnob(param: parameterTree.global.neutraltube)
+                        ParameterKnob(param: parameterTree.global.neutraltube, size: 45)
                         Text("NEUTRAL")
                             .font(.system(size: 8, weight: .bold))
                             .foregroundColor(.black)
                     }
                     VStack(spacing: 4) {
-                        ParameterKnob(param: parameterTree.global.warmtube)
+                        ParameterKnob(param: parameterTree.global.warmtube, size: 45)
                         Text("WARM")
                             .font(.system(size: 8, weight: .bold))
                             .foregroundColor(.black)
                     }
                     VStack(spacing: 4) {
-                        ParameterKnob(param: parameterTree.global.aggressivetube)
+                        ParameterKnob(param: parameterTree.global.aggressivetube, size: 45)
                         Text("AGGRESSIVE")
                             .font(.system(size: 8, weight: .bold))
                             .foregroundColor(.black)
@@ -172,5 +194,9 @@ struct TubeCityExtensionMainView: View {
 
     var param: ObservableAUParameter {
         parameterTree.global.bypass
+    }
+
+    var signalLevelParam: ObservableAUParameter {
+        parameterTree.global.signallevel
     }
 }
