@@ -11,5 +11,8 @@
 
 typedef NS_ENUM(AUParameterAddress, TubeCityExtensionParameterAddress) {
     tubegain = 0,
-    bypass = 1
+    bypass = 1,
+    neutraltube = 2,
+    warmtube = 3,
+    aggressivetube = 4
 };

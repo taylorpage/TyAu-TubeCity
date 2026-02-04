@@ -19,6 +19,30 @@ let TubeCityExtensionParameterSpecs = ParameterTreeSpec {
             defaultValue: 1.0
         )
         ParameterSpec(
+            address: .neutraltube,
+            identifier: "neutraltube",
+            name: "Neutral Tube",
+            units: .linearGain,
+            valueRange: 0.0...1.0,
+            defaultValue: 0.0
+        )
+        ParameterSpec(
+            address: .warmtube,
+            identifier: "warmtube",
+            name: "Warm Tube",
+            units: .linearGain,
+            valueRange: 0.0...1.0,
+            defaultValue: 0.0
+        )
+        ParameterSpec(
+            address: .aggressivetube,
+            identifier: "aggressivetube",
+            name: "Aggressive Tube",
+            units: .linearGain,
+            valueRange: 0.0...1.0,
+            defaultValue: 0.0
+        )
+        ParameterSpec(
             address: .bypass,
             identifier: "bypass",
             name: "Bypass",

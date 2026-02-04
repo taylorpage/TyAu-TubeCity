@@ -118,8 +118,27 @@ struct TubeCityExtensionMainView: View {
                     y: 0
                 )
 
-                // Tube Gain knob
-                ParameterKnob(param: parameterTree.global.tubegain)
+                // Three tube style knobs
+                HStack(spacing: 20) {
+                    VStack(spacing: 4) {
+                        ParameterKnob(param: parameterTree.global.neutraltube)
+                        Text("NEUTRAL")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.black)
+                    }
+                    VStack(spacing: 4) {
+                        ParameterKnob(param: parameterTree.global.warmtube)
+                        Text("WARM")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.black)
+                    }
+                    VStack(spacing: 4) {
+                        ParameterKnob(param: parameterTree.global.aggressivetube)
+                        Text("AGGRESSIVE")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.black)
+                    }
+                }
 
                 Spacer()
 

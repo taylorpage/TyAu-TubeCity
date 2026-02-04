@@ -13,6 +13,9 @@
 #import <span>
 
 #import "TubeCityExtensionParameterAddresses.h"
+#include "TubeSaturation.hpp"
+#include "TaylorWarmTube.hpp"
+#include "TaylorAggressiveTube.hpp"
 
 /*
  TubeCityExtensionDSPKernel
@@ -23,6 +26,11 @@ public:
     void initialize(int inputChannelCount, int outputChannelCount, double inSampleRate) {
         mSampleRate = inSampleRate;
         initializeEQ(inSampleRate);
+
+        // Initialize tube processors
+        mNeutralTube.setSampleRate(inSampleRate);
+        mWarmTube.setSampleRate(inSampleRate);
+        mAggressiveTube.setSampleRate(inSampleRate);
     }
 
     // Initialize pre-distortion EQ filters
@@ -140,6 +148,15 @@ public:
             case TubeCityExtensionParameterAddress::bypass:
                 mBypassed = (value >= 0.5f);
                 break;
+            case TubeCityExtensionParameterAddress::neutraltube:
+                mNeutralTubeAmount = value;
+                break;
+            case TubeCityExtensionParameterAddress::warmtube:
+                mWarmTubeAmount = value;
+                break;
+            case TubeCityExtensionParameterAddress::aggressivetube:
+                mAggressiveTubeAmount = value;
+                break;
         }
     }
 
@@ -151,6 +168,12 @@ public:
                 return (AUValue)mTubeGain;
             case TubeCityExtensionParameterAddress::bypass:
                 return (AUValue)(mBypassed ? 1.0f : 0.0f);
+            case TubeCityExtensionParameterAddress::neutraltube:
+                return (AUValue)mNeutralTubeAmount;
+            case TubeCityExtensionParameterAddress::warmtube:
+                return (AUValue)mWarmTubeAmount;
+            case TubeCityExtensionParameterAddress::aggressivetube:
+                return (AUValue)mAggressiveTubeAmount;
 
             default: return 0.f;
         }
@@ -229,9 +252,30 @@ public:
                 // 3. Downsample back to original rate
                 float clipped = downsample4x(clipped1, clipped2, clipped3, clipped4, channel);
 
+                // Apply the three tube saturation processors
+                float tubeProcessed = clipped;
+
+                // Mix in neutral tube (if amount > 0)
+                if (mNeutralTubeAmount > 0.0f) {
+                    float neutralProcessed = mNeutralTube.processSample(clipped);
+                    tubeProcessed = clipped + (neutralProcessed - clipped) * mNeutralTubeAmount;
+                }
+
+                // Mix in warm tube (if amount > 0)
+                if (mWarmTubeAmount > 0.0f) {
+                    float warmProcessed = mWarmTube.processSample(tubeProcessed);
+                    tubeProcessed = tubeProcessed + (warmProcessed - tubeProcessed) * mWarmTubeAmount;
+                }
+
+                // Mix in aggressive tube (if amount > 0)
+                if (mAggressiveTubeAmount > 0.0f) {
+                    float aggressiveProcessed = mAggressiveTube.processSample(tubeProcessed);
+                    tubeProcessed = tubeProcessed + (aggressiveProcessed - tubeProcessed) * mAggressiveTubeAmount;
+                }
+
                 // Output with subtle makeup gain
                 float makeupGain = 1.0f + ((mTubeGain - 1.0f) * 0.2f);  // Gentle compensation
-                float output = clipped * makeupGain;
+                float output = tubeProcessed * makeupGain;
 
                 outputBuffers[channel][frameIndex] = output;
             }
@@ -261,6 +305,16 @@ public:
     float mTubeGain = 1.0f;  // 0.0 to 2.0
     bool mBypassed = false;
     AUAudioFrameCount mMaxFramesToRender = 1024;
+
+    // Tube processor instances
+    TubeSaturation mNeutralTube;
+    TaylorWarmTube mWarmTube;
+    TaylorAggressiveTube mAggressiveTube;
+
+    // Tube processor mix amounts (0.0 to 1.0)
+    float mNeutralTubeAmount = 0.0f;
+    float mWarmTubeAmount = 0.0f;
+    float mAggressiveTubeAmount = 0.0f;
 
     // Oversampling state variables (per-channel, max 8 channels)
     float mLastSample[8] = {0.0f};
