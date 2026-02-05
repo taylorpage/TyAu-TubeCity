@@ -65,7 +65,16 @@ let TubeCityExtensionParameterSpecs = ParameterTreeSpec {
             units: .linearGain,
             valueRange: 0.0...1.0,
             defaultValue: 0.0,
-            flags: [.flag_IsReadable]  // Read-only parameter for metering
+            flags: [.flag_IsReadable, .flag_IsWritable]  // Written by meter timer, read by UI
+        )
+        ParameterSpec(
+            address: .flickerlevel,
+            identifier: "flickerlevel",
+            name: "Flicker Level",
+            units: .linearGain,
+            valueRange: 0.0...1.0,
+            defaultValue: 0.0,
+            flags: [.flag_IsReadable, .flag_IsWritable]  // Written by meter timer, read by UI
         )
     }
 }

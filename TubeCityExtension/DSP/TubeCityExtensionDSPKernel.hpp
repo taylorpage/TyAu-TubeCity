@@ -181,6 +181,8 @@ public:
                 return (AUValue)mAggressiveTubeAmount;
             case TubeCityExtensionParameterAddress::signallevel:
                 return (AUValue)mSignalLevel;
+            case TubeCityExtensionParameterAddress::flickerlevel:
+                return (AUValue)mFlickerLevel;
 
             default: return 0.f;
         }
@@ -223,85 +225,82 @@ public:
             for (UInt32 channel = 0; channel < inputBuffers.size(); ++channel) {
                 std::copy_n(inputBuffers[channel], frameCount, outputBuffers[channel]);
             }
-            // Reset signal level when bypassed
-            mSignalLevel = 0.0f;
-            return;
+        } else {
+            // Perform per sample dsp on the incoming float in before assigning it to out
+            for (UInt32 channel = 0; channel < inputBuffers.size(); ++channel) {
+                for (UInt32 frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+                    float input = inputBuffers[channel][frameIndex];
+
+                    // Apply fixed pre-distortion EQ to shape tone
+                    float eqed = applyPreEQ(input, channel);
+
+                    // Apply tube gain (0.0 to 2.0)
+                    float gained = eqed * mTubeGain;
+
+                    // 4x Oversampling:
+                    // 1. Upsample to 4x sample rate (creates 4 samples from 1)
+                    float upsampled[4];
+                    upsample4x(gained, upsampled, channel);
+
+                    // 2. Apply clipping to all 4 oversampled samples (adds tube warmth)
+                    float clipped1 = applyClipping(upsampled[0]);
+                    float clipped2 = applyClipping(upsampled[1]);
+                    float clipped3 = applyClipping(upsampled[2]);
+                    float clipped4 = applyClipping(upsampled[3]);
+
+                    // 3. Downsample back to original rate
+                    float clipped = downsample4x(clipped1, clipped2, clipped3, clipped4, channel);
+
+                    // Apply the three tube saturation processors
+                    float tubeProcessed = clipped;
+
+                    // Mix in neutral tube (if amount > 0)
+                    if (mNeutralTubeAmount > 0.0f) {
+                        float neutralProcessed = mNeutralTube.processSample(clipped);
+                        tubeProcessed = clipped + (neutralProcessed - clipped) * mNeutralTubeAmount;
+                    }
+
+                    // Mix in warm tube (if amount > 0)
+                    if (mWarmTubeAmount > 0.0f) {
+                        float warmProcessed = mWarmTube.processSample(tubeProcessed);
+                        tubeProcessed = tubeProcessed + (warmProcessed - tubeProcessed) * mWarmTubeAmount;
+                    }
+
+                    // Mix in aggressive tube (if amount > 0)
+                    if (mAggressiveTubeAmount > 0.0f) {
+                        float aggressiveProcessed = mAggressiveTube.processSample(tubeProcessed);
+                        tubeProcessed = tubeProcessed + (aggressiveProcessed - tubeProcessed) * mAggressiveTubeAmount;
+                    }
+
+                    // Output with makeup gain and output volume
+                    // Aggressive makeup gain to compensate for tube processor losses (which have ~0.45-0.92 output gains)
+                    float makeupGain = 2.5f;  // Strong compensation for tube saturation losses
+                    float output = tubeProcessed * makeupGain * mOutputVolume;
+
+                    outputBuffers[channel][frameIndex] = output;
+                }
+            }
         }
-        
-        // Use this to get Musical context info from the Plugin Host,
-        // Replace nullptr with &memberVariable according to the AUHostMusicalContextBlock function signature
-        /*
-         if (mMusicalContextBlock) {
-         mMusicalContextBlock(nullptr, 	// currentTempo
-         nullptr, 	// timeSignatureNumerator
-         nullptr, 	// timeSignatureDenominator
-         nullptr, 	// currentBeatPosition
-         nullptr, 	// sampleOffsetToNextBeat
-         nullptr);	// currentMeasureDownbeatPosition
-         }
-         */
-        
-        // Perform per sample dsp on the incoming float in before assigning it to out
-        for (UInt32 channel = 0; channel < inputBuffers.size(); ++channel) {
+
+        // Meter updates run on the actual output regardless of bypass state
+        for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
             for (UInt32 frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-                float input = inputBuffers[channel][frameIndex];
+                float absOutput = std::abs(outputBuffers[channel][frameIndex]);
 
-                // Apply fixed pre-distortion EQ to shape tone
-                float eqed = applyPreEQ(input, channel);
-
-                // Apply tube gain (0.0 to 2.0)
-                float gained = eqed * mTubeGain;
-
-                // 4x Oversampling:
-                // 1. Upsample to 4x sample rate (creates 4 samples from 1)
-                float upsampled[4];
-                upsample4x(gained, upsampled, channel);
-
-                // 2. Apply clipping to all 4 oversampled samples (adds tube warmth)
-                float clipped1 = applyClipping(upsampled[0]);
-                float clipped2 = applyClipping(upsampled[1]);
-                float clipped3 = applyClipping(upsampled[2]);
-                float clipped4 = applyClipping(upsampled[3]);
-
-                // 3. Downsample back to original rate
-                float clipped = downsample4x(clipped1, clipped2, clipped3, clipped4, channel);
-
-                // Apply the three tube saturation processors
-                float tubeProcessed = clipped;
-
-                // Mix in neutral tube (if amount > 0)
-                if (mNeutralTubeAmount > 0.0f) {
-                    float neutralProcessed = mNeutralTube.processSample(clipped);
-                    tubeProcessed = clipped + (neutralProcessed - clipped) * mNeutralTubeAmount;
-                }
-
-                // Mix in warm tube (if amount > 0)
-                if (mWarmTubeAmount > 0.0f) {
-                    float warmProcessed = mWarmTube.processSample(tubeProcessed);
-                    tubeProcessed = tubeProcessed + (warmProcessed - tubeProcessed) * mWarmTubeAmount;
-                }
-
-                // Mix in aggressive tube (if amount > 0)
-                if (mAggressiveTubeAmount > 0.0f) {
-                    float aggressiveProcessed = mAggressiveTube.processSample(tubeProcessed);
-                    tubeProcessed = tubeProcessed + (aggressiveProcessed - tubeProcessed) * mAggressiveTubeAmount;
-                }
-
-                // Output with makeup gain and output volume
-                // Aggressive makeup gain to compensate for tube processor losses (which have ~0.45-0.92 output gains)
-                float makeupGain = 2.5f;  // Strong compensation for tube saturation losses
-                float output = tubeProcessed * makeupGain * mOutputVolume;
-
-                outputBuffers[channel][frameIndex] = output;
-
-                // Update signal level meter (peak detection with decay)
-                float absOutput = std::abs(output);
+                // Signal level: smooth attack and extremely slow decay (mimics tube heating/cooling)
                 if (absOutput > mSignalLevel) {
-                    // Fast attack: immediately track peaks
-                    mSignalLevel = absOutput;
+                    // Smooth attack - blend toward peak instead of instant jump
+                    mSignalLevel += (absOutput - mSignalLevel) * 0.05f;  // ~200ms attack
                 } else {
-                    // Slow decay: smoothly fall back
-                    mSignalLevel *= 0.9995f;  // Decay coefficient
+                    mSignalLevel *= 0.99995f;  // Extremely gradual decay (~40 seconds) for long, smooth glow fade
+                }
+
+                // Flicker level: slightly smoother attack, very slow decay
+                if (absOutput > mFlickerLevel) {
+                    // Smooth attack for flicker too
+                    mFlickerLevel += (absOutput - mFlickerLevel) * 0.1f;  // ~100ms attack
+                } else {
+                    mFlickerLevel *= 0.9991f;  // Very slow decay (~4 seconds) for smooth, gradual flickers
                 }
             }
         }
@@ -357,4 +356,5 @@ public:
 
     // Signal level meter (for visual feedback)
     float mSignalLevel = 0.0f;
+    float mFlickerLevel = 0.0f;
 };

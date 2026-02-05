@@ -15,6 +15,7 @@ typedef NS_ENUM(AUParameterAddress, TubeCityExtensionParameterAddress) {
     neutraltube = 2,
     warmtube = 3,
     aggressivetube = 4,
-    signallevel = 5,  // Read-only parameter for visual feedback
-    outputvolume = 6
+    signallevel = 5,
+    outputvolume = 6,
+    flickerlevel = 7
 };

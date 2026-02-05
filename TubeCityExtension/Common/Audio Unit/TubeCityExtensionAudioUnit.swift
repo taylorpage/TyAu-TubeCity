@@ -66,16 +66,6 @@ public class TubeCityExtensionAudioUnit: AUAudioUnit, @unchecked Sendable
         }
     }
 
-    public override var  shouldBypassEffect: Bool {
-        get {
-            return kernel.isBypassed()
-        }
-
-        set {
-            kernel.setBypass(newValue)
-        }
-    }
-	
     // MARK: - Rendering
     public override var internalRenderBlock: AUInternalRenderBlock {
         return processHelper!.internalRenderBlock()
@@ -152,9 +142,14 @@ public class TubeCityExtensionAudioUnit: AUAudioUnit, @unchecked Sendable
     // MARK: - Signal Level Metering
 
     private func startMeterUpdateTimer() {
-        // Update meter at ~30 Hz for smooth visual feedback
-        meterUpdateTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
-            self?.updateSignalLevelParameter()
+        // Update meter at ~30 Hz for smooth visual feedback.
+        // Must be scheduled on the main run loop — allocateRenderResources can be
+        // called from a background thread, and a Timer on a background run loop
+        // that never runs will never fire.
+        DispatchQueue.main.async {
+            self.meterUpdateTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+                self?.updateSignalLevelParameter()
+            }
         }
     }
 
@@ -165,14 +160,16 @@ public class TubeCityExtensionAudioUnit: AUAudioUnit, @unchecked Sendable
 
     private func updateSignalLevelParameter() {
         guard let parameterTree = parameterTree,
-              let signalLevelParam = parameterTree.parameter(withAddress: TubeCityExtensionParameterAddress.signallevel.rawValue) else {
+              let signalLevelParam = parameterTree.parameter(withAddress: TubeCityExtensionParameterAddress.signallevel.rawValue),
+              let flickerLevelParam = parameterTree.parameter(withAddress: TubeCityExtensionParameterAddress.flickerlevel.rawValue) else {
             return
         }
 
-        // Get current signal level from kernel
-        let currentLevel = kernel.getSignalLevel()
-
-        // Update parameter value (this will notify observers)
-        signalLevelParam.value = currentLevel
+        // Use nil originator so the ObservableAUParameter's observer token
+        // fires and pushes the value into SwiftUI.  The .value setter passes
+        // its own token as originator, which AU suppresses to prevent feedback
+        // loops — that works for knobs but kills meter updates.
+        signalLevelParam.setValue(kernel.getSignalLevel(), originator: nil)
+        flickerLevelParam.setValue(kernel.getParameter(TubeCityExtensionParameterAddress.flickerlevel.rawValue), originator: nil)
     }
 }

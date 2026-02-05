@@ -141,10 +141,10 @@ struct VacuumTube: View {
             gridStructure
                 .frame(height: size.height * 0.12)
 
-            // Cathode (bottom element)
+            // Cathode (bottom element) — glows with signal, dark when silent/bypassed
             RoundedRectangle(cornerRadius: 2)
                 .fill(
-                    isBypassed ? Color(white: 0.25) : Color.orange.opacity(0.6)
+                    isBypassed ? Color(white: 0.25) : Color.orange.opacity(signalLevel > 0 ? 0.2 + pow(signalLevel, 0.5) * 0.5 : 0.0)
                 )
                 .frame(width: size.width * 0.5, height: size.height * 0.06)
 
@@ -164,8 +164,8 @@ struct VacuumTube: View {
     }
 
     private var glowEffect: some View {
-        let glowIntensity = signalLevel
-        let glowOpacity = 0.3 + (glowIntensity * 0.7) // Range from 0.3 to 1.0
+        // Sqrt lifts quiet signals so they're visible, but stays 0 at true silence.
+        let glowOpacity = signalLevel > 0 ? pow(signalLevel, 0.5) : 0.0
 
         return VStack(spacing: 0) {
             Spacer()

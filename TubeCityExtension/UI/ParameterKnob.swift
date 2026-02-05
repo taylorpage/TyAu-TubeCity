@@ -82,7 +82,7 @@ struct ParameterKnob: View {
                     .shadow(color: .black.opacity(0.5), radius: 6, x: 0, y: 3)
             }
         }
-        .frame(width: 200, height: 200)
+        .frame(width: size + scaleRadius * 2, height: size + scaleRadius * 2)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { gesture in
