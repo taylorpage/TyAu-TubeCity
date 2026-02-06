@@ -12,14 +12,23 @@ struct TubeCityExtensionMainView: View {
 
     var body: some View {
         ZStack {
-            // Green pedal chassis background
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(red: 0.7, green: 0.85, blue: 0.7))
-                .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+            // TubeCity image background with shadow
+            if let bgImage = NSImage(named: "tubeCity") {
+                Image(nsImage: bgImage)
+                    .resizable(resizingMode: .stretch)
+                    .frame(width: 380, height: 600)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+            }
 
-            // Black border inset
+            // Green pedal chassis background (commented out)
+//            RoundedRectangle(cornerRadius: 8)
+//                .fill(Color(red: 0.7, green: 0.85, blue: 0.7))
+//                .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+
+            // White border inset
             RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.black, lineWidth: 2)
+                .stroke(Color.white, lineWidth: 2)
                 .padding(12)
 
             // Output jack (left side) with vertical label
@@ -33,7 +42,12 @@ struct TubeCityExtensionMainView: View {
                     }
                     Text("OUTPUT")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                         .rotationEffect(.degrees(-90))
                         .fixedSize()
                 }
@@ -48,7 +62,12 @@ struct TubeCityExtensionMainView: View {
                 HStack(spacing: 4) {
                     Text("INPUT")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                        .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                         .rotationEffect(.degrees(-90))
                         .fixedSize()
                         .offset(x: -3)
@@ -73,8 +92,13 @@ struct TubeCityExtensionMainView: View {
                     VStack(spacing: -35) {
                         ParameterKnob(param: parameterTree.global.outputvolume, size: 70)
                         Text("VOLUME")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.black)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                     }
                     .offset(x: -10)
                 }
@@ -88,18 +112,28 @@ struct TubeCityExtensionMainView: View {
                     HStack(spacing: 4) {
                         Text("9V")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                         Circle()
-                            .stroke(Color.black, lineWidth: 1.5)
+                            .stroke(Color.white, lineWidth: 1.5)
                             .frame(width: 12, height: 12)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                             .overlay(
                                 Circle()
-                                    .fill(Color.black)
+                                    .fill(Color.white)
                                     .frame(width: 6, height: 6)
                             )
                     }
                     .padding(.top, 16)
-                    .padding(.trailing, 32)
+                    .padding(.trailing, 42)
                 }
                 Spacer()
             }
@@ -173,14 +207,24 @@ struct TubeCityExtensionMainView: View {
                         VStack(spacing: -45) {
                             ParameterKnob(param: parameterTree.global.warmtube, size: 110)
                             Text("WARM")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.black)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                         }
                         VStack(spacing: -45) {
                             ParameterKnob(param: parameterTree.global.aggressivetube, size: 110)
                             Text("AGGRESSIVE")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.black)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                                .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                         }
                     }
 
@@ -188,8 +232,13 @@ struct TubeCityExtensionMainView: View {
                     VStack(spacing: -45) {
                         ParameterKnob(param: parameterTree.global.neutraltube, size: 110)
                         Text("NEUTRAL")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.black)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: -1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: -1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.8), radius: 1, x: 1, y: 1)
+                            .shadow(color: Color(red: 0.1, green: 0.15, blue: 0.25).opacity(0.5), radius: 2, x: 0, y: 0)
                     }
                 }
 
@@ -223,7 +272,7 @@ struct TubeCityExtensionMainView: View {
                             .frame(width: 100)
                             .foregroundColor(.gray)
                             .opacity(0.7)
-                            .offset(x: 10)
+                            .offset(x: 0)
                     }
                     Spacer()
                 }
@@ -231,7 +280,7 @@ struct TubeCityExtensionMainView: View {
                 .padding(.bottom, 12)
             }
         }
-        .frame(width: 140, height: 600)
+        .frame(width: 380, height: 600)
     }
 
     // MARK: - Tube Visualization
