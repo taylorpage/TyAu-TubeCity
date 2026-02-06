@@ -12,10 +12,15 @@ struct TubeCityExtensionMainView: View {
 
     var body: some View {
         ZStack {
-            // Clean light grey background
+            // Green pedal chassis background
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color(white: 0.9))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .fill(Color(red: 0.7, green: 0.85, blue: 0.7))
+                .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+
+            // Black border inset
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.black, lineWidth: 2)
+                .padding(12)
 
             // Output jack (left side) with vertical label
             HStack {
@@ -60,106 +65,143 @@ struct TubeCityExtensionMainView: View {
             }
             .padding(.top, 20)
 
-            // Volume knob overlaid in top-right corner
+            // Volume knob overlaid in bottom-right corner, aligned with stomp box
             VStack {
+                Spacer()
                 HStack {
                     Spacer()
-                    VStack(spacing: 4) {
+                    VStack(spacing: -35) {
                         ParameterKnob(param: parameterTree.global.outputvolume, size: 70)
                         Text("VOLUME")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.black)
                     }
-                    .padding(.trailing, 16)
+                    .offset(x: -10)
                 }
-                .padding(.top, 12)
+                .padding(.bottom, 30)
+            }
+
+            // 9V Power indicator
+            VStack {
+                HStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Text("9V")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.black)
+                        Circle()
+                            .stroke(Color.black, lineWidth: 1.5)
+                            .frame(width: 12, height: 12)
+                            .overlay(
+                                Circle()
+                                    .fill(Color.black)
+                                    .frame(width: 6, height: 6)
+                            )
+                    }
+                    .padding(.top, 16)
+                    .padding(.trailing, 32)
+                }
                 Spacer()
             }
 
-            VStack(spacing: 20) {
-                Spacer()
-                    .frame(height: 30)
+            // LED indicator at top center
+            VStack {
+                HStack {
+                    Spacer()
+                    ZStack {
+                        Circle()
+                            .fill(param.boolValue ? Color(red: 0.3, green: 0.35, blue: 0.32) : Color.green)
+                            .frame(width: 20, height: 20)
 
-                // Vacuum tube visualization (tube.png with signal-driven glow)
-                tubeVisualization
+                        Circle()
+                            .stroke(Color.black.opacity(0.6), lineWidth: 2)
+                            .frame(width: 20, height: 20)
 
-                Spacer()
-                    .frame(height: 10)
-
-                // LED indicator
-                ZStack {
-                    Circle()
-                        .fill(param.boolValue ? Color(red: 0.3, green: 0.35, blue: 0.32) : Color.green)
-                        .frame(width: 20, height: 20)
-
-                    Circle()
-                        .stroke(Color.black.opacity(0.6), lineWidth: 2)
-                        .frame(width: 20, height: 20)
-
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(colors: [
-                                    param.boolValue ? Color.clear : Color.white.opacity(0.6),
-                                    Color.clear
-                                ]),
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 10
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    gradient: Gradient(colors: [
+                                        param.boolValue ? Color.clear : Color.white.opacity(0.6),
+                                        Color.clear
+                                    ]),
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 10
+                                )
                             )
-                        )
-                        .frame(width: 20, height: 20)
+                            .frame(width: 20, height: 20)
 
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: Color.white.opacity(0.5), location: 0.0),
-                                    .init(color: Color.white.opacity(0.2), location: 0.3),
-                                    .init(color: Color.clear, location: 0.6)
-                                ]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: Color.white.opacity(0.5), location: 0.0),
+                                        .init(color: Color.white.opacity(0.2), location: 0.3),
+                                        .init(color: Color.clear, location: 0.6)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                        )
-                        .frame(width: 20, height: 20)
-                        .mask(
-                            Circle()
-                                .frame(width: 8, height: 8)
-                                .offset(x: -3, y: -3)
-                        )
+                            .frame(width: 20, height: 20)
+                            .mask(
+                                Circle()
+                                    .frame(width: 8, height: 8)
+                                    .offset(x: -3, y: -3)
+                            )
+                    }
+                    .shadow(
+                        color: param.boolValue ? .clear : .green.opacity(0.8),
+                        radius: param.boolValue ? 0 : 6,
+                        x: 0,
+                        y: 0
+                    )
+                    Spacer()
                 }
-                .shadow(
-                    color: param.boolValue ? .clear : .green.opacity(0.8),
-                    radius: param.boolValue ? 0 : 6,
-                    x: 0,
-                    y: 0
-                )
+                .padding(.top, 40)
+                Spacer()
+            }
 
+            VStack(spacing: 8) {
                 Spacer()
                     .frame(height: 10)
 
-                // Three tube style knobs
-                HStack(spacing: 20) {
-                    VStack(spacing: 4) {
-                        ParameterKnob(param: parameterTree.global.neutraltube, size: 52)
+                // Three tube style knobs in triangle pattern (inverted) - moved up higher
+                VStack(spacing: -60) {
+                    // Top two knobs (Warm and Aggressive)
+                    HStack(spacing: -60) {
+                        VStack(spacing: -45) {
+                            ParameterKnob(param: parameterTree.global.warmtube, size: 110)
+                            Text("WARM")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.black)
+                        }
+                        VStack(spacing: -45) {
+                            ParameterKnob(param: parameterTree.global.aggressivetube, size: 110)
+                            Text("AGGRESSIVE")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.black)
+                        }
+                    }
+
+                    // Bottom knob (Neutral)
+                    VStack(spacing: -45) {
+                        ParameterKnob(param: parameterTree.global.neutraltube, size: 110)
                         Text("NEUTRAL")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.black)
-                    }
-                    VStack(spacing: 4) {
-                        ParameterKnob(param: parameterTree.global.warmtube, size: 52)
-                        Text("WARM")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.black)
-                    }
-                    VStack(spacing: 4) {
-                        ParameterKnob(param: parameterTree.global.aggressivetube, size: 52)
-                        Text("AGGRESSIVE")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.black)
                     }
                 }
+
+                Spacer()
+                    .frame(height: 80)
+
+                // Vacuum tube visualization (tube.png with signal-driven glow) - COMMENTED OUT FOR NOW
+//                HStack {
+//                    tubeVisualization
+//                        .offset(x: -60)
+//                    Spacer()
+//                }
 
                 Spacer()
 
@@ -167,7 +209,7 @@ struct TubeCityExtensionMainView: View {
                 BypassButton(param: parameterTree.global.bypass)
                     .padding(.bottom, 40)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 0)
 
             // TaylorAudio logo (bottom left corner)
             VStack {
@@ -181,6 +223,7 @@ struct TubeCityExtensionMainView: View {
                             .frame(width: 100)
                             .foregroundColor(.gray)
                             .opacity(0.7)
+                            .offset(x: 10)
                     }
                     Spacer()
                 }
@@ -188,7 +231,7 @@ struct TubeCityExtensionMainView: View {
                 .padding(.bottom, 12)
             }
         }
-        .frame(width: 280, height: 480)
+        .frame(width: 140, height: 600)
     }
 
     // MARK: - Tube Visualization
@@ -244,12 +287,25 @@ struct TubeCityExtensionMainView: View {
                     .frame(width: 80, height: 150)
 
                 // Flicker overlay — yellow tint driven by fast-decay flickerLevel
+                // Masked to exclude the silver cap at the top
                 Image(nsImage: tubeImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 80, height: 150)
-                    .colorMultiply(Color(red: 0.70, green: 0.55, blue: 0.05))
+                    .colorMultiply(Color(red: 1.0, green: 0.70, blue: 0.20))
                     .opacity(flicker * 0.80)
+                    .mask(
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .clear, location: 0.0),
+                                .init(color: .clear, location: 0.28),
+                                .init(color: .black, location: 0.35),
+                                .init(color: .black, location: 1.0)
+                            ]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
             }
         }
         .frame(width: 120, height: 170)
