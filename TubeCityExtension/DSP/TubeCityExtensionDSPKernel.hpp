@@ -282,27 +282,72 @@ public:
             }
         }
 
-        // Meter updates run on the actual output regardless of bypass state
-        for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
-            for (UInt32 frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-                float absOutput = std::abs(outputBuffers[channel][frameIndex]);
+        // Meter updates: scale by tube activity (sum of tube knob amounts)
+        // If all tube knobs are at 0, no glow should appear
+        float totalTubeActivity = mNeutralTubeAmount + mWarmTubeAmount + mAggressiveTubeAmount;
+        totalTubeActivity = std::min(totalTubeActivity, 1.0f);  // Clamp to 1.0 max
 
-                // Signal level: smooth attack and extremely slow decay (mimics tube heating/cooling)
-                if (absOutput > mSignalLevel) {
-                    // Smooth attack - blend toward peak instead of instant jump
-                    mSignalLevel += (absOutput - mSignalLevel) * 0.05f;  // ~200ms attack
-                } else {
-                    mSignalLevel *= 0.99995f;  // Extremely gradual decay (~40 seconds) for long, smooth glow fade
-                }
-
-                // Flicker level: slightly smoother attack, very slow decay
-                if (absOutput > mFlickerLevel) {
-                    // Smooth attack for flicker too
-                    mFlickerLevel += (absOutput - mFlickerLevel) * 0.1f;  // ~100ms attack
-                } else {
-                    mFlickerLevel *= 0.9991f;  // Very slow decay (~4 seconds) for smooth, gradual flickers
+        if (!mBypassed && totalTubeActivity > 0.0f) {
+            // Detect if current buffer is silent (threshold: -60dB or ~0.001)
+            float maxSampleInBuffer = 0.0f;
+            for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
+                for (UInt32 frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+                    float absOutput = std::abs(outputBuffers[channel][frameIndex]);
+                    maxSampleInBuffer = std::max(maxSampleInBuffer, absOutput);
                 }
             }
+
+            const float silenceThreshold = 0.001f;  // -60dB
+            bool isSilent = (maxSampleInBuffer < silenceThreshold);
+
+            if (isSilent) {
+                mSilenceFrameCount++;
+            } else {
+                mSilenceFrameCount = 0;  // Reset on any audio
+            }
+
+            // If silent for more than ~1 second (at 48kHz, 512 frames/buffer = ~94 buffers/sec)
+            // Start faster decay after ~100 silent buffers (~1 second)
+            bool prolongedSilence = (mSilenceFrameCount > 100);
+
+            if (prolongedSilence) {
+                // Fast decay when audio paused - same as bypass (applied once per buffer)
+                mSignalLevel *= 0.95f;
+                mFlickerLevel *= 0.95f;
+            } else {
+                // Process audio normally with slow decay
+                for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
+                    for (UInt32 frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
+                        float absOutput = std::abs(outputBuffers[channel][frameIndex]);
+
+                        // Scale output by tube activity - more tubes engaged = brighter glow
+                        float scaledOutput = absOutput * totalTubeActivity;
+
+                        // Signal level: smooth attack and ultra-slow decay
+                        if (scaledOutput > mSignalLevel) {
+                            // Very slow attack - tube filament heats up gradually
+                            mSignalLevel += (scaledOutput - mSignalLevel) * 0.01f;  // ~1 second gradual warm-up
+                        } else {
+                            // Normal ultra-slow decay during short gaps or quiet passages
+                            mSignalLevel *= 0.999995f;  // ~3+ minutes - tube stays hot for a long time
+                        }
+
+                        // Flicker level: slightly smoother attack, very slow decay
+                        if (scaledOutput > mFlickerLevel) {
+                            // Smooth attack for flicker too
+                            mFlickerLevel += (scaledOutput - mFlickerLevel) * 0.05f;  // ~200ms attack
+                        } else {
+                            // Normal slow decay
+                            mFlickerLevel *= 0.99995f;  // ~40 seconds for smooth, gradual flickers
+                        }
+                    }
+                }
+            }
+        } else {
+            // When bypassed or no tube activity, quickly fade meters to zero
+            mSignalLevel *= 0.95f;  // Fast decay when bypassed
+            mFlickerLevel *= 0.95f;
+            mSilenceFrameCount = 0;  // Reset silence counter
         }
     }
     
@@ -357,4 +402,7 @@ public:
     // Signal level meter (for visual feedback)
     float mSignalLevel = 0.0f;
     float mFlickerLevel = 0.0f;
+
+    // Silence detection (counts frames of near-silence)
+    int mSilenceFrameCount = 0;
 };
